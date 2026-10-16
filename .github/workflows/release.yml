@@ -1,0 +1,68 @@
+name: Publish to PyPI
+
+# Publishes viva-equilibrator to PyPI via OIDC Trusted Publishing (no API token).
+# Triggered when a GitHub Release is published, so cutting a Release is the
+# single action that ships a version.
+#
+# PREREQUISITE (one-time, human PyPI owner only — an agent cannot do this):
+#   viva-equilibrator is not yet on PyPI, so add a PENDING publisher at
+#   https://pypi.org/manage/account/publishing/ -> GitHub, with:
+#     PyPI Project Name:   viva-equilibrator
+#     owner:               vivarium-collective
+#     repository:          viva-equilibrator
+#     workflow filename:   release.yml
+#     environment name:    pypi
+#   Until that is configured PyPI-side, the publish step below fails (the
+#   GitHub Release + tag still ship, which is enough to pin the package by git).
+
+on:
+  release:
+    types: [published]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    name: Build sdist + wheel
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Build distributions
+        run: |
+          python -m pip install --upgrade build
+          python -m build
+
+      - name: Upload dist artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: dist
+          path: dist/
+
+  publish:
+    name: Publish to PyPI (Trusted Publishing)
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: pypi
+      url: https://pypi.org/project/viva-equilibrator/
+    permissions:
+      id-token: write
+    steps:
+      - name: Download dist artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: dist
+          path: dist/
+
+      - name: Publish to PyPI
+        uses: pypa/gh-action-pypi-publish@v1.14.2
+        with:
+          skip-existing: true

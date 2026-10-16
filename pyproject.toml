@@ -1,0 +1,27 @@
+[build-system]
+requires = ["setuptools>=68.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "viva-equilibrator"
+version = "0.1.0"
+description = "Process-bigraph wrapper for eQuilibrator (component-contribution transformed Gibbs energies)"
+readme = "README.md"
+requires-python = ">=3.11"
+dependencies = [
+    "process-bigraph>=0.0.10",
+    "bigraph-schema",
+    "viva-superpowers",
+    "equilibrator-api>=0.6",
+    "numpy",
+    "pyyaml",
+]
+
+[project.optional-dependencies]
+dev = ["pytest", "bigraph-viz", "matplotlib"]
+
+[tool.uv.sources]
+viva-superpowers = { git = "https://github.com/vivarium-collective/viva-superpowers.git", branch = "main" }
+
+[tool.setuptools.packages.find]
+include = ["viva_equilibrator*"]
