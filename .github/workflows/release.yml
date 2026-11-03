@@ -12,8 +12,15 @@ name: Publish to PyPI
 #     repository:          viva-equilibrator
 #     workflow filename:   release.yml
 #     environment name:    pypi
-#   Until that is configured PyPI-side, the publish step below fails (the
-#   GitHub Release + tag still ship, which is enough to pin the package by git).
+#   Until that is configured PyPI-side, a publish attempt fails with
+#   `invalid-publisher`. To avoid a misleading red X on every release while the
+#   package is not yet set up on PyPI, the publish job below is GATED behind a
+#   repo variable and is SKIPPED by default. The GitHub Release + tag still
+#   ship, which is enough to pin the package by git.
+#
+# TO ENABLE PUBLISHING (after the PyPI publisher above is configured):
+#   gh variable set PYPI_PUBLISH_ENABLED --body true --repo vivarium-collective/viva-equilibrator
+#   From then on real publish failures surface normally (no longer masked).
 
 on:
   release:
@@ -49,6 +56,10 @@ jobs:
   publish:
     name: Publish to PyPI (Trusted Publishing)
     needs: build
+    # Skipped until the PyPI trusted publisher is configured and
+    # PYPI_PUBLISH_ENABLED is set to "true" (see header). Avoids a red X on
+    # every release while the project is not yet on PyPI.
+    if: ${{ vars.PYPI_PUBLISH_ENABLED == 'true' }}
     runs-on: ubuntu-latest
     environment:
       name: pypi
